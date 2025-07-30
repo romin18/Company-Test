@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Task Summarizer + Tagger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #1e40af;
+            padding: 20px 40px;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            position: relative;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .tagline {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+            max-width: 1400px;
+            margin: 0 auto;
+            gap: 0;
+        }
+        
+        .left-panel {
+            flex: 1;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .right-panel {
+            width: 450px;
+            background: #fafbfc;
+            border-left: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            padding: 30px 30px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+        }
+        
+        .panel-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        
+        .input-section {
+            padding: 30px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .results-section {
+            padding: 30px;
+            flex: 1;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: #64748b;
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 10px 0;
+            color: #374151;
+        }
+        
+        .empty-state p {
+            margin: 0;
+            max-width: 300px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-direction: column;
+        }
+        
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #374151;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .tasks-input-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .textarea-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+        }
+        
+        .tasks-list {
+            flex: 1;
+            margin-bottom: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+        
+        .task-input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        
+        .task-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+        
+        .task-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .task-input::placeholder {
+            color: #9ca3af;
+        }
+        
+        .task-number {
+            background: #2563eb;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .remove-task-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .remove-task-btn:hover {
+            background: #dc2626;
+        }
+        
+        .remove-task-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .textarea-hint {
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        
+        .empty-tasks-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+            border: 2px dashed #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .empty-tasks-state .icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+            color: #2563eb;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        .task-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .task-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .task-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .task-original {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border: 1px solid #f1f5f9;
+        }
+        
+        .task-original-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .task-original-text {
+            color: #475569;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+        
+        .task-summary {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        
+        .task-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .task-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            background: #2563eb;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .priority-badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        
+        .priority-1, .priority-2 { background: #dcfce7; color: #166534; }
+        .priority-3 { background: #fef3c7; color: #92400e; }
+        .priority-4, .priority-5 { background: #fecaca; color: #991b1b; }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: #64748b;
+        }
+        
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            border: 1px solid #fecaca;
+            font-size: 0.9rem;
+        }
+        
+        .success {
+            background: #f0fdf4;
+            color: #166534;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            border: 1px solid #bbf7d0;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .left-panel {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            
+            .right-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #e2e8f0;
+            }
+            
+            body {
+                height: auto;
+                overflow: auto;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px 20px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+            
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+            
+            .stats-bar {
+                grid-template-columns: 1fr;
+            }
+            
+            .task-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span>🎯</span>
+                <h1>Smart Task Summarizer + Tagger</h1>
+            </div>
+            <div class="tagline">Transform messy tasks into organized, prioritized action items using AI</div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Panel - Results -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">✨ AI-Processed Results</h2>
+                <p class="panel-subtitle">Your tasks will appear here after processing</p>
+            </div>
+            
+            <div class="results-section" id="resultsSection">
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-state-icon">📋</div>
+                    <h3>Ready to process your tasks</h3>
+                    <p>Enter your tasks on the right panel and click "Process with AI" to see intelligent summaries, tags, and priorities.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Input -->
+        <div class="right-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">📝 Input Tasks</h2>
+                <p class="panel-subtitle">Add your messy task descriptions below</p>
+            </div>
+            
+            <div class="input-section">
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="loadSampleTasks()">
+                        📋 Load Sample Tasks
+                    </button>
+                    <button class="btn btn-primary" onclick="processTasks()" id="processBtn">
+                        🚀 Process with AI
+                    </button>
+                    <button class="btn btn-success" onclick="exportExcel()" id="exportBtn" disabled>
+                        📊 Export to Excel
+                    </button>
+                </div>
+                
+                <div class="tasks-input-container">
+                    <div class="textarea-label">Task Descriptions</div>
+                    
+                    <div class="tasks-list" id="tasksList">
+                        <!-- Task inputs will be dynamically added here -->
+                    </div>
+                    
+                    <button type="button" class="btn btn-secondary" onclick="addNewTaskInput()" id="addTaskBtn">
+                        ➕ Add New Task
+                    </button>
+                    
+                    <div class="textarea-hint">💡 Add tasks one by one, then click "Process with AI" to get intelligent summaries and priorities</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTasks = [];
+        let taskCounter = 0;
+        
+        // Initialize the page with some task inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTaskInputs();
+        });
+        
+        function initializeTaskInputs() {
+            // Start with 3 empty task inputs
+            addNewTaskInput();
+            addNewTaskInput();
+            addNewTaskInput();
+        }
+        
+        function addNewTaskInput(placeholder = '') {
+            taskCounter++;
+            const tasksList = document.getElementById('tasksList');
+            
+            // Remove empty state if it exists
+            const emptyState = tasksList.querySelector('.empty-tasks-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+            
+            const taskRow = document.createElement('div');
+            taskRow.className = 'task-input-row';
+            taskRow.dataset.taskId = taskCounter;
+            
+            taskRow.innerHTML = `
+                <div class="task-number">${taskCounter}</div>
+                <input type="text" class="task-input" 
+                       placeholder="${placeholder || `Enter task ${taskCounter} (e.g., fix login bug, call client, etc.)`}"
+                       data-task-id="${taskCounter}"
+                       onkeydown="handleTaskInputKeydown(event, ${taskCounter})">
+                <button type="button" class="remove-task-btn" onclick="removeTaskInput(${taskCounter})" title="Remove task">
+                    ×
+                </button>
+            `;
+            
+            tasksList.appendChild(taskRow);
+            
+            // Focus on the new input
+            const newInput = taskRow.querySelector('.task-input');
+            newInput.focus();
+            
+            // Update remove button states
+            updateRemoveButtonStates();
+            
+            return newInput;
+        }
+        
+        function removeTaskInput(taskId) {
+            const taskRow = document.querySelector(`[data-task-id="${taskId}"]`);
+            if (taskRow) {
+                taskRow.remove();
+                renumberTasks();
+                updateRemoveButtonStates();
+                
+                // Show empty state if no tasks left
+                const tasksList = document.getElementById('tasksList');
+                if (tasksList.children.length === 0) {
+                    showEmptyTasksState();
+                }
+            }
+        }
+        
+        function renumberTasks() {
+            const taskRows = document.querySelectorAll('.task-input-row');
+            taskRows.forEach((row, index) => {
+                const number = index + 1;
+                const numberElement = row.querySelector('.task-number');
+                const input = row.querySelector('.task-input');
+                
+                numberElement.textContent = number;
+                
+                // Update placeholder if it's still the default
+                const currentPlaceholder = input.placeholder;
+                if (currentPlaceholder.includes('Enter task')) {
+                    input.placeholder = `Enter task ${number} (e.g., fix login bug, call client, etc.)`;
+                }
+            });
+        }
+        
+        function updateRemoveButtonStates() {
+            const removeButtons = document.querySelectorAll('.remove-task-btn');
+            const taskCount = removeButtons.length;
+            
+            // Disable remove buttons if only one task left
+            removeButtons.forEach(btn => {
+                btn.disabled = taskCount <= 1;
+            });
+        }
+        
+        function showEmptyTasksState() {
+            const tasksList = document.getElementById('tasksList');
+            tasksList.innerHTML = `
+                <div class="empty-tasks-state">
+                    <div class="icon">📝</div>
+                    <h3>No tasks added yet</h3>
+                    <p>Click "Add New Task" to start adding your tasks</p>
+                </div>
+            `;
+        }
+        
+        function getAllTasks() {
+            const taskInputs = document.querySelectorAll('.task-input');
+            const tasks = [];
+            
+            taskInputs.forEach(input => {
+                const task = input.value.trim();
+                if (task) {
+                    tasks.push(task);
+                }
+            });
+            
+            return tasks;
+        }
+        
+        function clearAllTasks() {
+            const tasksList = document.getElementById('tasksList');
+            tasksList.innerHTML = '';
+            taskCounter = 0;
+            showEmptyTasksState();
+        }
+        
+        function populateTaskInputs(tasks) {
+            clearAllTasks();
+            
+            tasks.forEach((task, index) => {
+                const input = addNewTaskInput();
+                input.value = task;
+            });
+            
+            // Add one empty input at the end
+            addNewTaskInput();
+        }
+        
+        function handleTaskInputKeydown(event, taskId) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                
+                // If this is the last input and has content, add a new one
+                const currentInput = event.target;
+                const allInputs = document.querySelectorAll('.task-input');
+                const isLastInput = currentInput === allInputs[allInputs.length - 1];
+                
+                if (isLastInput && currentInput.value.trim()) {
+                    const newInput = addNewTaskInput();
+                    newInput.focus();
+                } else {
+                    // Move to next input
+                    const currentIndex = Array.from(allInputs).indexOf(currentInput);
+                    const nextInput = allInputs[currentIndex + 1];
+                    if (nextInput) {
+                        nextInput.focus();
+                    }
+                }
+            }
+        }
+        
+        async function loadSampleTasks() {
+            try {
+                const response = await fetch('/api/sample-tasks');
+                const data = await response.json();
+                
+                // Populate the individual task inputs with sample data
+                populateTaskInputs(data.tasks);
+                
+                showSuccess('Sample tasks loaded! Ready to process with AI.');
+            } catch (error) {
+                showError('Failed to load sample tasks: ' + error.message);
+            }
+        }
+        
+        async function processTasks() {
+            const tasks = getAllTasks();
+            
+            if (tasks.length === 0) {
+                showError('Please enter at least one task to process!');
+                return;
+            }
+            
+            // Show loading
+            showLoading();
+            setButtonsEnabled(false);
+            
+            try {
+                const response = await fetch('/api/process-tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tasks: tasks })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTasks = data.processed_tasks;
+                    console.log('Processing successful, showing results:', currentTasks);
+                    displayResults(currentTasks);
+                    showSuccess(`Successfully processed ${data.total_tasks} tasks with AI!`);
+                    document.getElementById('exportBtn').disabled = false;
+                } else {
+                    console.error('Processing failed:', data);
+                    showError('Failed to process tasks: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                setButtonsEnabled(true);
+            }
+        }
+        
+        function displayResults(tasks) {
+            console.log('displayResults called with tasks:', tasks);
+            const resultsSection = document.getElementById('resultsSection');
+            
+            if (!resultsSection) {
+                console.error('Results section not found');
+                return;
+            }
+            
+            if (!tasks || tasks.length === 0) {
+                console.error('No tasks to display');
+                showError('No tasks received from server');
+                return;
+            }
+            
+            // Calculate stats
+            const totalTasks = tasks.length;
+            const highPriority = tasks.filter(task => task.priority >= 4).length;
+            const avgPriority = (tasks.reduce((sum, task) => sum + task.priority, 0) / totalTasks).toFixed(1);
+            
+            // Show results section with proper structure
+            resultsSection.innerHTML = `
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-value">${totalTasks}</span>
+                        <span class="stat-label">Total Tasks</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${highPriority}</span>
+                        <span class="stat-label">High Priority</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${avgPriority}</span>
+                        <span class="stat-label">Avg Priority</span>
+                    </div>
+                </div>
+                
+                <div class="task-grid"></div>
+            `;
+            
+            // Get the task grid element
+            const taskGrid = resultsSection.querySelector('.task-grid');
+            
+            // Create task cards
+            tasks.forEach((task, index) => {
+                console.log(`Creating card for task ${index + 1}:`, task);
+                const taskCard = createTaskCard(task, index);
+                taskGrid.appendChild(taskCard);
+            });
+            
+            console.log('Results displayed successfully');
+        }
+        
+        function createTaskCard(task, index) {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            
+            card.innerHTML = `
+                <div class="task-original">
+                    <div class="task-original-label">Original Task #${index + 1}</div>
+                    <div class="task-original-text">${escapeHtml(task.original)}</div>
+                </div>
+                
+                <div class="task-summary">${escapeHtml(task.summary)}</div>
+                
+                <div class="task-meta">
+                    <div class="task-tags">
+                        ${task.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+                    </div>
+                    <div class="priority-badge priority-${task.priority}">
+                        Priority: ${task.priority}/5
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function updateStats(tasks) {
+            const totalTasks = tasks.length;
+            const highPriority = tasks.filter(task => task.priority >= 4).length;
+            const avgPriority = (tasks.reduce((sum, task) => sum + task.priority, 0) / totalTasks).toFixed(1);
+            
+            // Safely update elements if they exist
+            const totalTasksEl = document.getElementById('totalTasks');
+            const highPriorityEl = document.getElementById('highPriority');
+            const avgPriorityEl = document.getElementById('avgPriority');
+            
+            if (totalTasksEl) totalTasksEl.textContent = totalTasks;
+            if (highPriorityEl) highPriorityEl.textContent = highPriority;
+            if (avgPriorityEl) avgPriorityEl.textContent = avgPriority;
+        }
+        
+        async function exportExcel() {
+            if (currentTasks.length === 0) {
+                showError('No tasks to export!');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                const exportBtn = document.getElementById('exportBtn');
+                const originalText = exportBtn.innerHTML;
+                exportBtn.innerHTML = '⏳ Generating Excel...';
+                exportBtn.disabled = true;
+                
+                const response = await fetch('/api/export-excel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tasks: currentTasks })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `AI_Processed_Tasks_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showSuccess('✨ Beautiful Excel file with color coding exported successfully!');
+                } else {
+                    const error = await response.json();
+                    showError('Export failed: ' + error.error);
+                }
+                
+                // Restore button
+                exportBtn.innerHTML = originalText;
+                exportBtn.disabled = false;
+                
+            } catch (error) {
+                showError('Export error: ' + error.message);
+                
+                // Restore button
+                const exportBtn = document.getElementById('exportBtn');
+                exportBtn.innerHTML = '📊 Export to Excel';
+                exportBtn.disabled = false;
+            }
+        }
+        
+        function showLoading() {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <h3>⚡ Processing your tasks...</h3>
+                    <p>AI is analyzing and organizing your tasks</p>
+                </div>
+            `;
+        }
+        
+        function setButtonsEnabled(enabled) {
+            document.getElementById('processBtn').disabled = !enabled;
+            if (!enabled) {
+                document.getElementById('exportBtn').disabled = true;
+            }
+        }
+        
+        function showError(message) {
+            removeMessages();
+            const error = document.createElement('div');
+            error.className = 'error';
+            error.innerHTML = `<strong>Error:</strong> ${escapeHtml(message)}`;
+            document.querySelector('.input-section').appendChild(error);
+            setTimeout(removeMessages, 5000);
+        }
+        
+        function showSuccess(message) {
+            removeMessages();
+            const success = document.createElement('div');
+            success.className = 'success';
+            success.innerHTML = `<strong>Success:</strong> ${escapeHtml(message)}`;
+            document.querySelector('.input-section').appendChild(success);
+            setTimeout(removeMessages, 3000);
+        }
+        
+        function removeMessages() {
+            document.querySelectorAll('.error, .success').forEach(el => el.remove());
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Auto-load sample tasks on page load
+        window.addEventListener('load', () => {
+            loadSampleTasks();
+        });
+    </script>
+</body>
+</html> 
