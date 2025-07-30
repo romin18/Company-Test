@@ -63,7 +63,7 @@ A professional AI-powered web application that transforms messy, unstructured ta
 1. **Clone the Repository**
    ```bash
    git clone <repository-url>
-   cd "Company Test"
+   cd "TidynoteAI-Spearmint-Test"
    ```
 
 2. **Install Dependencies**
