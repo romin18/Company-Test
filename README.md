@@ -243,7 +243,7 @@ FLASK_DEBUG=true
 ## 📁 Project Structure
 
 ```
-Company Test/
+TidynoteAI-Spearmint-Test/
 ├── app.py                 # Main Flask application
 ├── requirements.txt       # Python dependencies
 ├── .env.example          # Environment template
